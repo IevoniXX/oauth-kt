@@ -1,19 +1,21 @@
 ```mermaid
 sequenceDiagram
-    participant User
-    participant ArgoCD_UI as ArgoCD (UI)
-    participant Browser as Web Browser
-    participant Keycloak as Keycloak (Authorization Server)
+    participant U as User
+    participant A as ArgoCD (UI)
+    participant B as Browser
+    participant K as Keycloak (Auth Server)
+    participant P as PKCE Verify<br/>(https://{hostname}/pkce/verify)
 
-    Note over User: Starts UI Login (PKCE)
-    
-    User->>ArgoCD_UI: Access ArgoCD UI
-    ArgoCD_UI->>Browser: Redirect to Keycloak<br/> (https://argocd.example.com/auth/callback)<br/> + **PKCE Code Challenge**
-    Browser->>Keycloak: User enters credentials
-    Keycloak->>Browser: Redirect back to UI
-    Browser->>ArgoCD_UI: Authorization Code (https://argocd.example.com/auth/callback)
-    ArgoCD_UI->>Keycloak: Exchange code + **Code Verifier (PKCE)**
-    Keycloak->>ArgoCD_UI: ✅ Access Token Issued
-    Note over User: Successfully logged in! 🎉
+    Note over U: Initiates Login (PKCE Flow)
+    U->>A: Access ArgoCD UI
+    A->>B: Redirect to Keycloak with PKCE Code Challenge<br/>(redirect_uri: https://{hostname}/auth/callback)
+    B->>K: User logs in (submits credentials)
+    K->>B: Redirect back with Authorization Code<br/>(to: https://{hostname}/auth/callback)
+    B->>A: Pass Authorization Code
+    A->>P: Call https://{hostname}/pkce/verify<br/>(send Code + Code Verifier)
+    P->>K: Validate Code & Code Verifier
+    K->>P: Issue Access Token
+    P->>A: Forward Access Token
+    A->>U: User successfully logged in! 🎉
 
 ```
